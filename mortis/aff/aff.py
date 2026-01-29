@@ -8,6 +8,7 @@ from pydantic import BaseModel, model_validator
 
 from mortis.aff.lexer.analyse import analyse_annotation, analyse_command, analyse_part_separation, analyse_timinggroup_footer, analyse_timinggroup_header
 from mortis.aff.lexer.token import tokenize
+from mortis.aff.types.hitsound_str import HitsoundStr
 from mortis.aff.types.models import AFFEvent
 from mortis.aff.timinggroup import TimingGroup, parse_event
 from mortis.utils import get_default_model_cfg
@@ -49,6 +50,7 @@ class AFF(BaseModel):
 	def groups(self) -> tuple[TimingGroup, ...]:
 		return tuple(self.iter_groups())
 
+
 	def iter_events(self) -> Iterator[AFFEvent]:
 		for group in self.iter_groups():
 			yield from group.iter_events()
@@ -56,6 +58,7 @@ class AFF(BaseModel):
 	@property
 	def events(self) -> tuple[AFFEvent, ...]:
 		return tuple(self.iter_events())
+
 
 	@property
 	def tpdf(self) -> float | None:
@@ -77,6 +80,7 @@ class AFF(BaseModel):
 	def unwrap_tpdf(self) -> float:
 		return 1.0 if self.tpdf is None else self.tpdf
 	
+
 	@classmethod
 	def load_from_path(cls, path) -> Self:
 		with open(path, 'r', encoding='utf-8') as f:
@@ -182,13 +186,13 @@ class AFF(BaseModel):
 	
 
 	@property
-	def required_hitsounds(self) -> set[str]:
-		hitsounds = set()
-		for group in self.groups:
+	def required_hitsounds(self) -> set[HitsoundStr]:
+		hitsounds: set[HitsoundStr] = set()
+		for group in self.iter_groups():
 			hitsounds |= group.required_hitsounds
 		return hitsounds
 
-	
+
 	@model_validator(mode='after')
 	def _after_validation(self) -> Self:
 		self.offset = self.attrs.get(AudioOffset, 0)
@@ -200,4 +204,5 @@ class AFF(BaseModel):
 			self.tpdf = tpdf
 		
 		return self
+	
 	

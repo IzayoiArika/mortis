@@ -36,7 +36,7 @@ class TokenType(StrEnum):
 	# Types
 	Float = r'[+-]?(\d+\.\d*|\.\d+)'
 	Integer = r'[+-]?[0-9]+'
-	Identifier = r'[a-zA-Z_][a-zA-Z0-9]*'
+	Identifier = r'[a-zA-Z_][a-zA-Z0-9_]*'
 
 	# Special
 	PartSeparator = r'-'

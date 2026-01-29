@@ -3,10 +3,10 @@ from __future__ import annotations
 from collections.abc import Iterable, Iterator
 from typing import Any, Self
 
-from pydantic import Field, NonNegativeInt as uint, model_serializer, model_validator
+from pydantic import Field, NonNegativeInt as uint, PositiveInt as posint, PositiveFloat as posfloat, model_serializer, model_validator
 
 from mortis.songlist.base import SonglistPartModel
-from mortis.songlist.types import RTCLS_STR_MAP, LowerAsciiId, RatingClassEnum, RatingInt, SingleLineStr, StrLocalizedSLRE
+from mortis.songlist.types import RTCLS_STR_MAP, BackgroundStr, RatingClassEnum, RatingInt, SingleLineStr, StrLocalizedSLRE
 
 
 __all__ = ['Difficulty', 'Difficulties']
@@ -18,12 +18,21 @@ class Difficulty(SonglistPartModel):
 	rating: RatingInt
 	rating_plus: bool = Field(default=False, alias='ratingPlus')
 
+
 	title_localized: StrLocalizedSLRE | None = None
+	artist: SingleLineStr | None = None
+
+	bpm: str | None = None
+	bpm_base: posint | posfloat | None = None
+
 	audio_override: bool = Field(default=False, alias='audioOverride')
 	jacket_override: bool = Field(default=False, alias='jacketOverride')
-	bg: LowerAsciiId | None = None
+	bg: BackgroundStr | None = None
 	date: uint | None = None
 	version: SingleLineStr | None = None
+
+	audio_preview: uint | None = Field(default=None, alias='audioPreview')
+	audio_preview_end: uint | None = Field(default=None, alias='audioPreviewEnd')
 
 	def is_activated(self) -> bool:
 		return self.rating != -1
@@ -34,12 +43,18 @@ class Difficulty(SonglistPartModel):
 	@property
 	def rating_str(self) -> str:
 		return f'{self.rating}+' if self.rating_plus else str(self.rating)
-
+	
 	@model_validator(mode='after')
 	def _after_validation(self) -> Self:
-		if self.rating in (-1, 0) and self.rating_plus:
-			raise ValueError(f'{self.rating_str} is not a valid rating level')
+		if self.audio_preview is not None:
+			if self.audio_preview_end is not None and self.audio_preview > self.audio_preview_end:
+				raise ValueError(f'\'audioPreviewEnd\' must be no earlier than \'audioPreview\'')
+			raise ValueError(f'\'audioPreview\' and \'audioPreviewEnd\' should be provided at the same time')
+		elif self.audio_preview_end is not None:
+			raise ValueError(f'\'audioPreview\' and \'audioPreviewEnd\' should be provided at the same time')
+
 		return self
+
 
 class _DifficultyList(SonglistPartModel):
 	data: list[Difficulty]
@@ -93,16 +108,19 @@ class Difficulties(SonglistPartModel):
 		elif isinstance(value, _DifficultyList):
 			return value.to_dict()
 		return value
-	
+
 	@property
 	def all_declared(self) -> tuple[Difficulty, ...]:
 		return tuple(self.nondefault_fields.values())
+	
+	def __len__(self) -> int:
+		return len(self.all_declared)
 
 	@property
 	def all_activated(self) -> tuple[Difficulty, ...]:
 		return tuple(
 			diff for name in self.__class__.model_fields
-			if (diff := getattr(self, name)) is not None and diff.is_activate()
+			if (diff := getattr(self, name)) is not None and diff.is_activated()
 		)
 
 	@model_serializer

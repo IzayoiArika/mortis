@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import json
 from io import TextIOWrapper
-from typing import Self
+from typing import Literal, Self
 
-from pydantic import Field, NonNegativeInt as uint, PositiveFloat as pfloat, PositiveInt as pint, PrivateAttr, field_serializer, model_validator
+from pydantic import Field, NonNegativeInt as uint, PositiveFloat as posfloat, PositiveInt as posint, PrivateAttr, field_serializer, model_validator
 
 from mortis.songlist.base import SonglistPartModel
-from mortis.songlist.bgs import Backgrounds
 from mortis.songlist.diffs import Difficulties
-from mortis.songlist.types import LowerAsciiId, SideEnum, SingleLineStr, StrLocalizedSLRE
+from mortis.songlist.types import Backgrounds, LowerAsciiId, BackgroundStr, SideEnum, SingleLineStr, StrLocalizedSLRE
 from mortis.utils import UnreachableBranch
 
 
@@ -26,20 +25,20 @@ class SonglistItem(SonglistPartModel):
 	artist_localized: StrLocalizedSLRE | None = None
 
 	bpm: str
-	bpm_base: pint | pfloat
+	bpm_base: posint | posfloat
 	pack: LowerAsciiId = Field(alias='set')
-	purchase: LowerAsciiId
+	purchase: LowerAsciiId | Literal[""]
 
 	side: SideEnum
 	@field_serializer('side', when_used='json')
 	def _serialize_side(self, v: SideEnum) -> int:
 		return v.value
 	
-	bg: LowerAsciiId
+	bg: BackgroundStr
 	date: uint
 	version: SingleLineStr
 	audio_preview: uint = Field(alias='audioPreview')
-	audio_preview_end: pint = Field(alias='audioPreviewEnd')
+	audio_preview_end: uint = Field(alias='audioPreviewEnd')
 
 	difficulties: Difficulties
 
@@ -56,8 +55,8 @@ class SonglistItem(SonglistPartModel):
 		if not self._relcheck:
 			return self
 		
-		if self.audio_preview >= self.audio_preview_end:
-			raise ValueError(f'\'audioPreviewEnd\' must be strictly later than \'audioPreview\'')
+		if self.audio_preview > self.audio_preview_end:
+			raise ValueError(f'\'audioPreviewEnd\' must be no earlier than \'audioPreview\'')
 		
 		if (
 			Backgrounds.is_official_bg(self.bg)

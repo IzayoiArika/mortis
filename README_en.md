@@ -119,9 +119,9 @@ mortis/
 
 ## Frequently Asked Questions (FAQ)
 - **Q: Is support for AFF/songlist currently complete?**
-  A: Still under development, but it already meets most basic functional needs.
+- A: Still under development, but it already meets most basic functional needs.
 - **Q: Does it support the latest AFF/songlist features of Arcaea?**
-  A: We will try to keep up with updates.
+- A: We will try to keep up with updates.
 
 ## License
 This project is open‑source under the **GNU General Public License v3 (GPLv3)**. See the [LICENSE](LICENSE) file for details.

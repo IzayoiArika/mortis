@@ -82,7 +82,7 @@ class _dffloat_base(float):
 		)
 
 
-__curvaceoia_dffloats__: dict[int, type[_dffloat_base]] = {}
+__mortis_dffloats__: dict[int, type[_dffloat_base]] = {}
 class dffloat(_dffloat_base):
 	"""
 	Subclass of `float` for ensuring format requirement of AFF file. 
@@ -173,7 +173,7 @@ class dffloat(_dffloat_base):
 		if prec <= 0:
 			raise TypeError(f'Precision must be a positive int, got {prec}')
 		
-		if prec not in __curvaceoia_dffloats__:
+		if prec not in __mortis_dffloats__:
 			class Subclass(_dffloat_base):
 				@classproperty
 				def precision(cls) -> int | None:
@@ -182,9 +182,9 @@ class dffloat(_dffloat_base):
 			Subclass.__name__ = f'{dffloat.__name__}[{prec}]'
 			Subclass.__qualname__ = f'{dffloat.__qualname__}[{prec}]'
 			
-			__curvaceoia_dffloats__[prec] = Subclass
+			__mortis_dffloats__[prec] = Subclass
 		
-		return __curvaceoia_dffloats__[prec]
+		return __mortis_dffloats__[prec]
 	
 dffloat2 = dffloat[2]
 dffloat3 = dffloat[3]

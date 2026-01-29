@@ -9,7 +9,7 @@ __all__ = []
 
 class SonglistPartModel(BaseModel):
 	model_config = ConfigDict(
-		extra='forbid',
+		extra='ignore',
 		allow_inf_nan=False,
 		validate_by_alias=True,
 		serialize_by_alias=True,

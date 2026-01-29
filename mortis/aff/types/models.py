@@ -4,11 +4,12 @@ from typing import Any, ClassVar, Self, final
 
 from pydantic import BaseModel, ValidationError, model_validator
 from pydantic.fields import FieldInfo
-from pydantic_core.core_schema import CoreSchema, union_schema, no_info_plain_validator_function
+# from pydantic_core.core_schema import CoreSchema, union_schema, no_info_plain_validator_function
 
 from mortis.aff.lexer.analyse import analyse_command
 from mortis.aff.lexer.token import tokenize
-from mortis.utils import get_default_model_cfg, classproperty
+from mortis.utils import get_default_model_cfg, classproperty, UnreachableBranch
+
 
 __all__ = [
 	'AFFEventConfig',
@@ -186,6 +187,8 @@ class AFFEvent(BaseModel):
 	
 	@classmethod
 	def _before_validation(cls, data: Any) -> Any:
+		if isinstance(data, str):
+			return cls.from_str(data)
 		return data
 	
 	def _after_validation(self) -> Self:
@@ -319,19 +322,8 @@ class AFFEvent(BaseModel):
 				line_errors = errors
 			)
 		
-		assert False, 'never reaches here'
-	
-	########################################################################################
-		
-	@final
-	@classmethod
-	def __get_pydantic_core_schema__(cls, source_type, handler) -> CoreSchema:
-		converters = [handler(source_type)]
-		converters.extend(
-			no_info_plain_validator_function(getattr(cls, name))
-			for name in cls.__converters__
-		)
-		return union_schema(converters)
+		raise UnreachableBranch
+
 
 class GameObjectEvent(AFFEvent):
 	def mirror(self) -> None:
@@ -340,11 +332,13 @@ class GameObjectEvent(AFFEvent):
 class TechnicalEvent(AFFEvent):
 	pass
 
+
 class FloorEvent(GameObjectEvent):
 	pass
 
 class SkyEvent(GameObjectEvent):
 	pass
+
 
 class LongNoteEvent(GameObjectEvent):
 	@property

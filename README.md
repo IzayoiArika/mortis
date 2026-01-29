@@ -119,9 +119,9 @@ mortis/
 
 ## 常见问题 (FAQ)
 - **Q: 目前对 AFF/songlist 的支持是否齐全？**
-  A: 尚在完善，但已能满足多数基本功能需求。
+- A: 尚在完善，但已能满足多数基本功能需求。
 - **Q: 支持 Arcaea 最新版本的 AFF/songlist 特性吗？**
-  A: 会尽量跟进更新。
+- A: 会尽量跟进更新。
 
 ## 许可证
 本项目基于 **GNU General Public License v3 (GPLv3)** 开源，详见 [LICENSE](LICENSE) 文件。

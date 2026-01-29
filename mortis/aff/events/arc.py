@@ -6,6 +6,7 @@ from typing import Any, ClassVar, Self
 
 from pydantic import NonNegativeInt as uint, PrivateAttr
 
+from mortis.aff.types.hitsound_str import HitsoundStr
 from mortis.aff.types.models import AFFEventConfig, LongNoteEvent, SkyEvent, TapLikeEvent
 from mortis.aff.types.coord import ArcCoord, Coordinate
 from mortis.aff.types.easings import ArcEasing, BaseEasing, get_easing_x, get_easing_y
@@ -134,7 +135,7 @@ class Arc(SkyEvent, LongNoteEvent):
 	begin_y: ArcCoord
 	end_y: ArcCoord
 	color: ArcColor
-	hitsound: str
+	hitsound: HitsoundStr
 	type_: ArcType
 	smoothness: dffloat2 | None = None
 
@@ -147,13 +148,6 @@ class Arc(SkyEvent, LongNoteEvent):
 	@property
 	def easing_y(self) -> BaseEasing:
 		return get_easing_y(self.easing)(self.begin_time, self.end_time, self.begin_y, self.end_y)
-	
-
-	def wrap_hitsound(self, hitsound: str | None) -> None:
-		self.hitsound = 'none' if hitsound is None else hitsound.replace('.', '_')
-	
-	def unwrap_hitsound(self) -> str | None:
-		return None if self.hitsound == 'none' else self.hitsound.replace('_', '.')
 	
 
 	def iter_arctaps(self) -> Iterator[Arctap]:
@@ -318,7 +312,7 @@ class ScaledArctap(SkyEvent, TapLikeEvent):
 	begin_x: ArcCoord
 	end_x: ArcCoord
 	y: ArcCoord
-	hitsound: str
+	hitsound: HitsoundStr
 
 	@classmethod
 	def from_arc(cls, arc: Arc) -> Self:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from enum import StrEnum
 from math import cos, pi, sin
 from typing import final
@@ -10,8 +11,9 @@ __all__ = [
 	'ArcEasing', 'get_easing_x', 'get_easing_y'
 ]
 
-class BaseEasing:
+class BaseEasing(ABC):
 	@staticmethod
+	@abstractmethod
 	def _at_unit(ratio: float) -> float:
 		"""Implementation of the easing curve, typically the y=f(x) expression of it."""
 		raise NotImplementedError
@@ -44,6 +46,13 @@ class BaseEasing:
 		self.begin_output = begin_output
 		self.end_output = end_output
 	
+	def __repr__(self) -> str:
+		args_str = ', '.join([
+			f'{argname}={getattr(self, argname)!r}'
+			for argname in ['begin_input', 'end_input', 'begin_output', 'end_output']
+		])
+		return f'{self.__class__.__name__}({args_str})'
+	
 class EasingLinear(BaseEasing):
 	@staticmethod
 	def _at_unit(ratio: float) -> float:
@@ -63,7 +72,8 @@ class EasingBezierDefault(BaseEasing):
 	"""Bezier curve, starts from (0, 0), ends at (1, 1), with 1st and 2nd control points (1/3, 0) and (2/3, 1)."""
 	@staticmethod
 	def _at_unit(ratio: float) -> float:
-		return 3 * ratio ** 2 - 2 * ratio ** 3 # Simplified formula. Gives exact value.
+		# Simplified formula. Gives exact value.
+		return 3 * ratio ** 2 - 2 * ratio ** 3
 
 class EasingSineInOut(BaseEasing):
 	@staticmethod

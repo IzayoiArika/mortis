@@ -6,7 +6,7 @@ from typing import Any, Generic, Literal, Self, TypeVar, final
 from pydantic import ConfigDict
 
 
-__all__ = ['get_default_model_cfg']
+__all__ = ['classproperty', 'get_default_model_cfg', 'UnreachableBranch', 'Predicate']
 
 MT = TypeVar('MT', bound=Any)
 RT = TypeVar('RT')
@@ -57,3 +57,5 @@ class UnreachableBranch(Exception):
 	def __repr__(self) -> str:
 		return '<UnreachableBranch>'
 UnreachableBranch() # create singleton
+
+type Predicate = Callable[[Any], bool]

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import Any, Self
+from typing import Annotated, Any, Self
 
-from pydantic import BaseModel, NonNegativeInt as uint, PrivateAttr, ValidationError, model_validator
+from pydantic import BaseModel, BeforeValidator, NonNegativeInt as uint, PrivateAttr, ValidationError, model_validator
 
 from mortis.aff.events.arc import Arc, ScaledArctap
 from mortis.aff.events.camera import Camera
@@ -11,11 +11,12 @@ from mortis.aff.events.hold import Hold, HoldFloat
 from mortis.aff.events.scenecontrol import SceneControl
 from mortis.aff.events.tap import Tap, TapFloat
 from mortis.aff.events.timing import Timing
+from mortis.aff.types.hitsound_str import HitsoundStr
 from mortis.aff.types.models import AFFEvent
 from mortis.aff.lexer.analyse import analyse_command, analyse_timinggroup_footer, analyse_timinggroup_header
 from mortis.aff.lexer.token import tokenize
 from mortis.globcfg import GlobalConfig
-from mortis.utils import get_default_model_cfg
+from mortis.utils import get_default_model_cfg, Predicate
 
 
 __all__ = ['parse_event', 'TimingGroup']
@@ -58,6 +59,11 @@ def parse_event(
 		}]
 	)
 
+
+def ensure_angle(ui: uint) -> uint:
+	return ui % 3600
+type AngleInt = Annotated[uint, BeforeValidator(ensure_angle)]
+
 __timing_group_attrs__ = ('noinput', 'fadingholds', 'anglex', 'angley')
 class TimingGroup(BaseModel):
 
@@ -65,8 +71,8 @@ class TimingGroup(BaseModel):
 
 	noinput: bool | None = None
 	fadingholds: bool | None = None
-	anglex: uint | None = None
-	angley: uint | None = None
+	anglex: AngleInt | None = None
+	angley: AngleInt | None = None
 
 	_events: list[AFFEvent] = PrivateAttr(default_factory=list)
 
@@ -114,7 +120,7 @@ class TimingGroup(BaseModel):
 	@classmethod
 	def load_args_from_str(cls, args_str: str) -> dict[str, bool | uint | None]:
 		args: dict[str, bool | uint | None] = {}
-		segments: list[str] = [s.strip() for s in args_str.split(',')]
+		segments: list[str] = [s.strip() for s in args_str.split('_')]
 
 		for seg in segments:
 			if seg == 'noinput':
@@ -187,17 +193,18 @@ class TimingGroup(BaseModel):
 	def clear_events(self) -> None:
 		self._events = []
 
+
 	@property
-	def required_hitsounds(self) -> set[str]:
-		hitsounds = set()
-		for event in self.events:
+	def required_hitsounds(self) -> set[HitsoundStr]:
+		hitsounds: set[HitsoundStr] = set()
+		for event in self.iter_events():
 			if not isinstance(event, Arc):
 				continue
-			hitsound = event.unwrap_hitsound()
-			if hitsound is not None:
-				hitsounds.add(hitsound)
+			if not event.hitsound.is_none():
+				hitsounds.add(event.hitsound)
 		return hitsounds
 	
+
 	@classmethod
 	def from_str(cls, contents: str, *, events_only: bool=False) -> Self:
 		instance = cls()
@@ -240,6 +247,8 @@ class TimingGroup(BaseModel):
 	def __str__(self) -> str:
 		return self.to_str()
 
+	def filter(self, predicate: Predicate) -> tuple[AFFEvent, ...]:
+		return tuple(event for event in self.iter_events()if predicate(event))
 
 	@model_validator(mode='after')
 	def _after_validation(self) -> Self:
@@ -248,11 +257,4 @@ class TimingGroup(BaseModel):
 
 		if self.fadingholds is False:
 			self.fadingholds = None
-
-		if self.anglex is not None:
-			self.anglex %= 3600
-		
-		if self.angley is not None:
-			self.angley %= 3600
-
 		return self
